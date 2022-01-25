@@ -22,6 +22,11 @@ class Tree
 		{
 			cout << "EDestructor:\t" << this << endl;
 		}
+
+		bool is_leaf()const
+		{
+			return pLeft == pRight;
+		}
 		friend class Tree;
 	}*Root;
 
@@ -30,20 +35,38 @@ public:
 	{
 		return Root;
 	}
+
 	Tree()
 	{
 		Root = nullptr;
 		cout << "TConstructor:\t" << this << endl;
 	}
+
 	Tree(const std::initializer_list<int>& il) : Tree()
 	{
 		for (int const* it = il.begin(); it != il.end(); it++)
 			insert(*it,Root);
 	}
+
+	Tree(const Tree& other) :Tree()
+	{
+		copy(other.Root);
+		cout << "CopyConstructor:\t" << this << endl;
+	}
+
 	~Tree()
 	{
 		clear(Root);
 		cout << "TDestructor:\t" << this << endl;
+	}
+
+	Tree& operator=(const Tree& other)
+	{
+		if(this==&other)return *this;
+		clear(Root);
+		copy(other.Root);
+		cout << "CopyAssignment:\t" << this << endl;
+		return *this;
 	}
 
 	void clear()
@@ -125,6 +148,11 @@ public:
 		//insert(Data, Root);
 	}
 
+	void erase(int Data)
+	{
+		erase(Data, Root);
+	}
+
 	int minValue(Element* Root)const
 	{
 		//if (Root->pLeft==nullptr)return Root->Data;
@@ -150,7 +178,47 @@ public:
 		return Root == nullptr ? 0 : (Root->Data) + sum(Root->pLeft) + sum(Root->pRight);
 	}
 
-	
+
+
+	void erase(Element*& Root, int Data)
+	{
+		if (Root == nullptr)return;
+
+		erase(Data, Root->pLeft);
+		erase(Data, Root->pRight);
+
+		if (Data == Root->Data)
+		{
+			if (Root->is_leaf())
+			{
+				delete Root;
+				Root = nullptr;
+			}
+			else
+			{
+				if (count(Root->pLeft) > count(Root->pRight))
+				{
+					Root->Data = minValue(Root->pRight);
+					erase(minValue(Root->pRight), Root->pRight);
+				}
+				else
+				{
+					Root->Data = maxValue(Root->pLeft);
+					erase(maxValue(Root->pLeft), Root->pLeft);
+				}
+			}
+		}
+	}
+
+	void copy(Element* Root)
+	{
+		if (Root == nullptr)return;
+		insert(Root->Data, this->Root);
+		copy(Root->pLeft);
+		copy(Root->pRight);
+	}
+
+
 
 	void print(Element* Root)const
 	{
@@ -160,6 +228,8 @@ public:
 		print(Root->pRight);
 	}
 };
+
+//#define COPY_METHODS_CHECK
 
 //#define BASE_CHECK
 
@@ -194,4 +264,19 @@ void main()
 	Tree tree = { 50,25,75,16,32,48,64,80,85,77 };
 	tree.print();
 	cout << "Глубина дерева: " << tree.depth() << endl;
+
+#ifdef COPY_METHODS_CHECK
+	Tree tree2 = tree;
+	tree2.print();
+
+	Tree tree3;
+	tree3 = tree2;
+	tree3.print();
+#endif // COPY_METHODS_CHECK
+
+	int value;
+	cout << "Введите удаляемое значение: "; cin >> value;
+	tree.erase(value);
+	tree.print();
+
 }
